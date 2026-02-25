@@ -43,7 +43,7 @@ Este playbook reemplaza ese proceso fragmentado con un flujo guiado, un timer re
 
 ```bash
 # Clona el repositorio
-git clone https://github.com/renatocuellarp/ir-playbook-ovi.git
+git clone https://github.com/renatocuellarp/ir-playbook-oiv.git
 
 # Abre el archivo directamente en tu navegador
 # Windows: doble clic sobre playbook-ir.html
@@ -54,7 +54,7 @@ open playbook-ir.html
 ### Opción B — GitHub Pages
 
 Accede desde cualquier dispositivo (incluyendo móvil) en:
-`https://renatocuellarp.github.io/ir-playbook-ovi/`
+`https://renatocuellarp.github.io/ir-playbook-oiv/`
 
 > **Nota sobre portapapeles:** La función "Copiar al portapapeles" requiere HTTPS o localhost. Funciona en GitHub Pages y al servir localmente. Desde archivo local, usa Firefox o descarga el reporte como .txt.
 
