@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IR Playbook — OIV Portuario</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0a0c0f;
+  --surface: #111318;
+  --surface2: #181c22;
+  --surface3: #1e2330;
+  --border: #252a35;
+  --border-bright: #353d4f;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --accent: #3b82f6;
+  --accent-dim: #1d4ed8;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --danger-dim: #991b1b;
+  --success: #22c55e;
+  --success-dim: #166534;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.status-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.status-idle { background: var(--surface3); color: var(--text-muted); border: 1px solid var(--border); }
+.status-active { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid var(--danger-dim); animation: pulse-border 2s infinite; }
+.status-contained { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid #92400e; }
+.status-closed { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid var(--success-dim); }
+
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--danger-dim); }
+  50% { border-color: var(--danger); }
+}
+
+/* ── TIMER ── */
+.timer-block {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.timer {
+  text-align: right;
+}
+
+.timer-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timer-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  transition: color 0.3s;
+}
+
+.timer-value.warning { color: var(--warn); }
+.timer-value.critical { color: var(--danger); }
+
+.timer-start-btn {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.2s;
+}
+
+.timer-start-btn:hover { background: #dc2626; }
+.timer-start-btn:disabled { background: var(--surface3); color: var(--text-muted); cursor: default; }
+
+/* ── MAIN LAYOUT ── */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+.main-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── PANELS ── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title .step-num {
+  background: var(--accent);
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel-body { padding: 16px; }
+
+/* ── INTAKE FORM ── */
+.intake-description {
+  width: 100%;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  padding: 12px;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+}
+
+.intake-description:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.intake-description::placeholder { color: var(--text-muted); }
+
+.intake-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.classify-btn {
+  margin-top: 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.2s;
+}
+
+.classify-btn:hover { background: var(--accent-dim); }
+
+/* ── TAXONOMY GRID ── */
+.taxonomy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.taxonomy-area {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.taxonomy-area-header {
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.area-uso { background: rgba(99,102,241,0.2); color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
+.area-conf { background: rgba(245,158,11,0.2); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
+.area-disp { background: rgba(239,68,68,0.2); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+.area-integ { background: rgba(34,197,94,0.2); color: #86efac; border-color: rgba(34,197,94,0.3); }
+
+.taxonomy-options { padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+
+.tax-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid transparent;
+}
+
+.tax-option:hover { background: var(--surface3); }
+.tax-option.selected { background: rgba(59,130,246,0.15); border-color: var(--accent); }
+
+.tax-option input { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+
+.tax-option-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.tax-option.selected .tax-option-text { color: var(--text); }
+
+/* ── SUBCATEGORIES ── */
+.subcategory-block {
+  display: none;
+  margin: 2px 0 4px 26px;
+  border-left: 2px solid var(--border-bright);
+  padding-left: 8px;
+}
+.subcategory-block.visible { display: flex; flex-direction: column; gap: 2px; }
+.sub-option {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 4px 6px; border-radius: 3px; cursor: pointer; transition: background 0.15s;
+}
+.sub-option:hover { background: var(--surface3); }
+.sub-option.selected { background: rgba(59,130,246,0.1); }
+.sub-option input { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+.sub-option-text { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.sub-option.selected .sub-option-text { color: var(--text-dim); }
+
+/* ── OFFICIAL TAXON DESCRIPTIONS ── */
+.taxon-desc {
+  display: block; font-size: 11px; color: var(--text-muted);
+  line-height: 1.4; margin-top: 3px; font-style: italic; padding-right: 4px;
+}
+.tax-option:hover .taxon-desc,
+.tax-option.selected .taxon-desc { color: var(--text-dim); }
+
+/* ── ASSET CRITICALITY ── */
+.asset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.asset-card {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--surface2);
+}
+
+.asset-card:hover { border-color: var(--border-bright); background: var(--surface3); }
+.asset-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+
+.asset-card-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.asset-card-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.crit-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.crit-critical { background: rgba(239,68,68,0.2); color: var(--danger); }
+.crit-high { background: rgba(245,158,11,0.2); color: var(--warn); }
+.crit-medium { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+.crit-low { background: rgba(34,197,94,0.2); color: var(--success); }
+
+/* ── ACTION PHASES ── */
+.phase-block {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.phase-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.phase-header:hover { background: var(--surface3); }
+
+.phase-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.phase-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.phase-window {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.phase-window.urgent { color: var(--danger); font-weight: 600; }
+.phase-window.warn { color: var(--warn); font-weight: 600; }
+
+.phase-progress {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.phase-actions { padding: 8px; }
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.action-item:hover { background: var(--surface3); }
+.action-item.done { opacity: 0.5; }
+
+.action-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-bright);
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.action-item.done .action-checkbox {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.action-item.done .action-checkbox::after {
+  content: '✓';
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.action-text {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.action-item.done .action-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.action-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tag-anci { background: rgba(59,130,246,0.2); color: #93c5fd; }
+.tag-dir { background: rgba(245,158,11,0.2); color: #fcd34d; }
+.tag-tech { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+.tag-mgmt { background: rgba(239,68,68,0.2); color: #fca5a5; }
+
+/* ── REPORT GENERATOR ── */
+.report-form { display: flex; flex-direction: column; gap: 10px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.form-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding-top: 8px;
+  letter-spacing: 0.05em;
+}
+
+.form-input, .form-textarea, .form-select {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 7px 10px;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
+
+.form-select option { background: var(--surface2); }
+
+.generate-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border-bright);
+  color: var(--text);
+  padding: 10px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.generate-btn:hover { border-color: var(--accent); color: var(--accent); }
+.generate-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.generate-btn.primary:hover { background: var(--accent-dim); }
+
+.generated-report {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none;
+}
+
+.generated-report.visible { display: block; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+/* ── TIMERS SIDEBAR ── */
+.deadline-list { display: flex; flex-direction: column; gap: 6px; }
+
+.deadline-item {
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.deadline-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.deadline-time {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.deadline-time.d-ok { color: var(--success); }
+.deadline-time.d-warn { color: var(--warn); }
+.deadline-time.d-crit { color: var(--danger); }
+.deadline-time.d-over { color: var(--text-muted); text-decoration: line-through; }
+
+.deadline-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── CONTACTS ── */
+.contact-list { display: flex; flex-direction: column; gap: 4px; }
+
+.contact-item {
+  padding: 8px 10px;
+  border-radius: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+
+.contact-role {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.contact-name {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  margin: 2px 0;
+}
+
+.contact-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.contact-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface3);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.contact-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── INCIDENT LOG ── */
+.log-list {
+  font-family: var(--mono);
+  font-size: 11px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+.log-time { color: var(--text-muted); }
+.log-text { color: var(--text-dim); }
+.log-text.important { color: var(--warn); }
+
+.log-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.log-input {
+  flex: 1;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 8px;
+}
+
+.log-input:focus { outline: none; border-color: var(--accent); }
+
+.log-add-btn {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.log-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── CLASSIFICATION SUGGESTION ── */
+.suggestion-box {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 12px;
+  display: none;
+}
+
+.suggestion-box.visible { display: block; }
+
+.suggestion-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #93c5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(59,130,246,0.15);
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-name { font-size: 13px; color: var(--text); }
+
+.suggestion-conf {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #93c5fd;
+}
+
+.suggestion-apply-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(59,130,246,0.4);
+  background: transparent;
+  color: #93c5fd;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.suggestion-apply-btn:hover { background: rgba(59,130,246,0.2); }
+
+/* ── MISC ── */
+.separator { height: 1px; background: var(--border); margin: 4px 0; }
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.empty-state-icon { font-size: 24px; margin-bottom: 8px; opacity: 0.4; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.progress-bar-wrap {
+  height: 3px;
+  background: var(--surface3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── COPY NOTIFICATION ── */
+.copy-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--success);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.copy-toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── RESET CONFIRM ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90%;
+}
+
+.modal-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.modal-body { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+.btn-cancel {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .main { grid-template-columns: 1fr; }
+  .taxonomy-grid { grid-template-columns: 1fr; }
+  .asset-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo"><span>IR</span> // Playbook OIV</div>
+    <div class="status-badge status-idle" id="statusBadge">STANDBY</div>
+  </div>
+  <div class="timer-block">
+    <div class="timer">
+      <div class="timer-label">⚡ ANCI — Alerta Temprana</div>
+      <div class="timer-value" id="timerANCI">03:00:00</div>
+    </div>
+    <button class="timer-start-btn" id="timerBtn" onclick="startTimer()">Activar Incidente</button>
+    <button class="timer-start-btn" style="background: var(--surface3); color: var(--text-muted); border: 1px solid var(--border);" onclick="showResetModal()">Reset</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT COLUMN -->
+  <div class="main-col">
+
+    <!-- STEP 1: DESCRIPCIÓN + CLASIFICACIÓN -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">1</span>
+          Descripción del incidente y clasificación ANCI
+        </div>
+      </div>
+      <div class="panel-body">
+        <textarea class="intake-description" id="incidentDesc" placeholder="Describe lo que ves o lo que te reportaron: 'Me informan que un servidor está cifrando archivos y hay extensiones desconocidas...'" rows="3"></textarea>
+        <div class="intake-hint">No necesitas saber el origen exacto — describe el efecto observable.</div>
+        <button class="classify-btn" onclick="classifyIncident()">→ Clasificar según taxonomía ANCI</button>
+
+        <div class="suggestion-box" id="suggestionBox">
+          <div class="suggestion-title">Clasificación sugerida — Resolución N°7/2025</div>
+          <div id="suggestionList"></div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">O selecciona manualmente:</div>
+          <div class="taxonomy-grid">
+            <!-- A: Uso legítimo de recursos (Art.3a + Art.4 i,ii,iii,iv) -->
+            <div class="taxonomy-area">
+              <div class="taxonomy-area-header area-uso">A — Uso legítimo de recursos</div>
+              <div class="taxonomy-options">
+                <label class="tax-option" onclick="toggleSub(event,'sub-uso1')">
+                  <input type="checkbox" name="taxon" value="Uso no autorizado de redes y sistemas" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">i. Uso no autorizado de redes y sistemas</span>
+                  <span class="taxon-desc">Uso no autorizado de sistemas de la institución afectada, ya sea a través de explotación de vulnerabilidades, uso no autorizado de credenciales, acceso a almacenamiento en nube, u otros.</span>
+                </label>
+                <div class="subcategory-block" id="sub-uso1">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Acceso no autorizado a almacenamiento"><span class="sub-option-text">a. Acceso no autorizado a almacenamiento</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Ataque de fuerza bruta exitoso"><span class="sub-option-text">b. Ataque de fuerza bruta exitoso</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Explotación de vulnerabilidades de autenticación"><span class="sub-option-text">c. Explotación de vulnerabilidades de autenticación</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Uso de credenciales comprometidas"><span class="sub-option-text">d. Uso de credenciales comprometidas</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-uso2')">
+                  <input type="checkbox" name="taxon" value="Phishing o fraude en infraestructura propia" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">ii. Phishing / fraude en infraestructura propia</span>
+                  <span class="taxon-desc">Envío de phishing a través de servidores de la institución afectada, o almacenamiento de sitios fraudulentos en redes y sistemas informáticos de la institución afectada.</span>
+                </label>
+                <div class="subcategory-block" id="sub-uso2">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Envío de correo phishing desde infraestructura propia"><span class="sub-option-text">a. Envío de correo no deseado o phishing desde infraestructura propia</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Sitio fraudulento en infraestructura propia"><span class="sub-option-text">b. Inclusión de sitio fraudulento en infraestructura propia</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-uso3')">
+                  <input type="checkbox" name="taxon" value="Phishing o fraude relacionado con la institución" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">iii. Phishing / fraude relacionado con la institución</span>
+                  <span class="taxon-desc">Envío de phishing relacionado con la institución afectada por parte de terceros, o almacenamiento de sitios fraudulentos por parte de terceros.</span>
+                </label>
+                <div class="subcategory-block" id="sub-uso3">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Envío de phishing sobre la organización"><span class="sub-option-text">a. Envío de correo no deseado o phishing sobre la organización</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Envío de phishing usando remitentes de la institución"><span class="sub-option-text">b. Envío de phishing usando remitentes de la institución</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-uso4')">
+                  <input type="checkbox" name="taxon" value="Ejecución no autorizada de código" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">iv. Ejecución no autorizada de código</span>
+                  <span class="taxon-desc">Inclusión y ejecución no autorizada de código en sistemas de la institución afectada.</span>
+                </label>
+                <div class="subcategory-block" id="sub-uso4">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Ejecución remota de código por parámetros"><span class="sub-option-text">a. Ejecución remota de código a través de parámetros de aplicación</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Inyección de prompts en LLM"><span class="sub-option-text">b. Inyección de requerimientos (prompts) en modelos LLM</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Inyección de consultas NoSQL"><span class="sub-option-text">c. Inyección de consultas NoSQL</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Inyección SQL"><span class="sub-option-text">d. Inyección de consultas SQL</span></label>
+                </div>
+              </div>
+            </div>
+            <!-- B: Confidencialidad (Art.3b + Art.4 v,vi,vii) -->
+            <div class="taxonomy-area">
+              <div class="taxonomy-area-header area-conf">B — Confidencialidad</div>
+              <div class="taxonomy-options">
+                <label class="tax-option" onclick="toggleSub(event,'sub-conf1')">
+                  <input type="checkbox" name="taxon" value="Exfiltración y/o exposición de datos" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">v. Exfiltración / exposición de datos</span>
+                  <span class="taxon-desc">Pérdida de información confidencial con o sin divulgación pública, y/o información confidencial expuesta accidental o intencionalmente.</span>
+                </label>
+                <div class="subcategory-block" id="sub-conf1">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Adversario en el medio (MitM)"><span class="sub-option-text">a. Adversario en el medio (MitM)</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Apropiación de credenciales mediante phishing"><span class="sub-option-text">b. Apropiación de credenciales mediante phishing</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Base de datos sin protección expuesta"><span class="sub-option-text">c. Base de datos sin protección (S3, Elasticsearch, MongoDB)</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Documentos públicos con datos sensibles"><span class="sub-option-text">d. Documentos públicos con datos sensibles</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Filtración de datos personales"><span class="sub-option-text">e. Filtración de datos personales</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Keylogger en uso"><span class="sub-option-text">f. Keylogger en uso</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Divulgación de credenciales en foros"><span class="sub-option-text">g. Divulgación de enumeraciones/credenciales en foros</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-conf2')">
+                  <input type="checkbox" name="taxon" value="Exfiltración y/o exposición de configuraciones" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">vi. Exfiltración / exposición de configuraciones</span>
+                  <span class="taxon-desc">Pérdida o exposición accidental de configuraciones y parámetros confidenciales de un sistema o aplicación de la institución afectada.</span>
+                </label>
+                <div class="subcategory-block" id="sub-conf2">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Filtración de configuraciones en rutas de aplicación"><span class="sub-option-text">a. Filtración de configuraciones en rutas de aplicación</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Filtración de secretos en rutas de aplicación"><span class="sub-option-text">b. Filtración de secretos en rutas de aplicación</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-conf3')">
+                  <input type="checkbox" name="taxon" value="Exfiltración y/o exposición de código fuente" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">vii. Exfiltración / exposición de código fuente</span>
+                  <span class="taxon-desc">Pérdida o exposición excesiva del código fuente de un sistema de la institución afectada.</span>
+                </label>
+                <div class="subcategory-block" id="sub-conf3">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Archivos de control de versión expuestos"><span class="sub-option-text">a. Archivo(s) de control de versión expuestos en aplicación</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Sistema de control de versión expuesto"><span class="sub-option-text">b. Sistema de control de versión expuesto</span></label>
+                </div>
+              </div>
+            </div>
+            <!-- C: Disponibilidad (Art.3c + Art.4 viii,ix) -->
+            <div class="taxonomy-area">
+              <div class="taxonomy-area-header area-disp">C — Disponibilidad</div>
+              <div class="taxonomy-options">
+                <label class="tax-option" onclick="toggleSub(event,'sub-disp1')">
+                  <input type="checkbox" name="taxon" value="Indisponibilidad y/o denegación de servicio" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">viii. Indisponibilidad / denegación de servicio</span>
+                  <span class="taxon-desc">Pérdida total del funcionamiento de un servicio, sistema o servidor, o saturación de red impidiendo su operación normal.</span>
+                </label>
+                <div class="subcategory-block" id="sub-disp1">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Agotamiento de conexiones TCP"><span class="sub-option-text">a. Agotamiento de conexiones TCP</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Apagado no autorizado de sistemas"><span class="sub-option-text">b. Apagado no autorizado de sistemas informáticos</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Ataque de amplificación DNS/NTP"><span class="sub-option-text">c. Ataque de amplificación DNS/NTP</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Ataque físico contra infraestructura TI"><span class="sub-option-text">d. Ataque físico contra infraestructura TI</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="DoS por explotación de vulnerabilidades"><span class="sub-option-text">e. Denegación de servicio por explotación de vulnerabilidades</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Eliminación de configuraciones críticas"><span class="sub-option-text">f. Eliminación de configuraciones críticas</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Tráfico de red excesivo volumétrico"><span class="sub-option-text">g. Tráfico de red excesivo (volumétrico)</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-disp2')">
+                  <input type="checkbox" name="taxon" value="Degradación de servicio" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">ix. Degradación de servicio</span>
+                  <span class="taxon-desc">Pérdida parcial del rendimiento o funcionalidad de un servicio, sistema o servidor.</span>
+                </label>
+                <div class="subcategory-block" id="sub-disp2">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Secuestro de recursos cryptojacking"><span class="sub-option-text">a. Secuestro de recursos (cryptojacking)</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Sobrecarga de bases de datos"><span class="sub-option-text">b. Sobrecarga de bases de datos</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Uso excesivo de ancho de banda"><span class="sub-option-text">c. Uso excesivo de ancho de banda</span></label>
+                </div>
+              </div>
+            </div>
+            <!-- D: Integridad (Art.3d + Art.4 x,xi) -->
+            <div class="taxonomy-area">
+              <div class="taxonomy-area-header area-integ">D — Integridad</div>
+              <div class="taxonomy-options">
+                <label class="tax-option" onclick="toggleSub(event,'sub-integ1')">
+                  <input type="checkbox" name="taxon" value="Modificación no autorizada de datos" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">x. Modificación no autorizada de datos</span>
+                  <span class="taxon-desc">Alteración no autorizada de información contenida en sistemas, servicios o servidores.</span>
+                </label>
+                <div class="subcategory-block" id="sub-integ1">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Alteración de bases de datos"><span class="sub-option-text">a. Alteración de bases de datos</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Alteración de sitio web defacement"><span class="sub-option-text">b. Alteración de sitio web (defacement)</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Manipulación de datos no autentificados"><span class="sub-option-text">c. Manipulación de datos no autentificados</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Modificación de logs de auditoría"><span class="sub-option-text">d. Modificación de logs de auditoría</span></label>
+                </div>
+                <label class="tax-option" onclick="toggleSub(event,'sub-integ2')">
+                  <input type="checkbox" name="taxon" value="Manipulación no autorizada de configuración" onchange="handleTaxonChange(this)">
+                  <span class="tax-option-text">xi. Manipulación no autorizada de configuración</span>
+                  <span class="taxon-desc">Cambio no autorizado de configuraciones en sistemas, servicios o servidores.</span>
+                </label>
+                <div class="subcategory-block" id="sub-integ2">
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Alteración de reglas de firewall"><span class="sub-option-text">a. Alteración de reglas de firewall</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Desactivación de registros de seguridad"><span class="sub-option-text">b. Desactivación de registros de seguridad</span></label>
+                  <label class="sub-option"><input type="checkbox" name="subtaxon" value="Modificación de políticas de acceso"><span class="sub-option-text">c. Modificación de políticas de acceso</span></label>
+                </div>
+              </div>
+            </div>
+          </div>        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: ACTIVO AFECTADO -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">2</span>
+          Activo afectado y criticidad
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="asset-grid" id="assetGrid">
+          <div class="asset-card" onclick="selectAsset(this, 'TOS (Terminal Operating System)', 'OT/IT', 'CRÍTICO', 'Operaciones portuarias')">
+            <div class="asset-card-name">TOS — Terminal Operating System</div>
+            <div class="asset-card-meta">Tipo: OT/IT convergente</div>
+            <div class="crit-badge crit-critical">CRÍTICO</div>
+          </div>
+          <div class="asset-card" onclick="selectAsset(this, 'SCADA / Grúas y equipos de patio', 'OT', 'CRÍTICO', 'Control operacional físico')">
+            <div class="asset-card-name">SCADA / Grúas y equipos de patio</div>
+            <div class="asset-card-meta">Tipo: OT puro</div>
+            <div class="crit-badge crit-critical">CRÍTICO</div>
+          </div>
+          <div class="asset-card" onclick="selectAsset(this, 'Servidores de archivos / AD', 'IT', 'ALTO', 'Infraestructura corporativa')">
+            <div class="asset-card-name">Servidores de archivos / AD</div>
+            <div class="asset-card-meta">Tipo: IT corporativo</div>
+            <div class="crit-badge crit-high">ALTO</div>
+          </div>
+          <div class="asset-card" onclick="selectAsset(this, 'WAF / Infraestructura perimetral', 'IT', 'ALTO', 'Seguridad perimetral')">
+            <div class="asset-card-name">WAF / Infraestructura perimetral</div>
+            <div class="asset-card-meta">Tipo: IT seguridad</div>
+            <div class="crit-badge crit-high">ALTO</div>
+          </div>
+          <div class="asset-card" onclick="selectAsset(this, 'Correo electrónico corporativo', 'IT', 'MEDIO', 'Comunicaciones internas')">
+            <div class="asset-card-name">Correo electrónico corporativo</div>
+            <div class="asset-card-meta">Tipo: IT comunicaciones</div>
+            <div class="crit-badge crit-medium">MEDIO</div>
+          </div>
+          <div class="asset-card" onclick="selectAsset(this, 'Otro activo (especificar en log)', 'IT/OT', 'A DEFINIR', '')">
+            <div class="asset-card-name">Otro activo</div>
+            <div class="asset-card-meta">Especificar en log de incidente</div>
+            <div class="crit-badge" style="background: var(--surface3); color: var(--text-muted);">EVALUAR</div>
+          </div>
+        </div>
+        <div id="assetSelected" style="display:none; margin-top: 12px; padding: 10px 12px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 4px; font-size: 13px; color: var(--text-dim);">
+          Activo seleccionado: <strong id="assetSelectedName" style="color: var(--text);"></strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: ACCIONES DE RESPUESTA -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">3</span>
+          Plan de acción
+        </div>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">
+          <span id="actionsProgress">0/0</span> completadas
+        </div>
+      </div>
+      <div class="panel-body" id="actionsPanel">
+        <div class="empty-state">
+          <div class="empty-state-icon">⬆</div>
+          Selecciona la clasificación del incidente y el activo afectado para ver las acciones recomendadas.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: REPORTE ANCI -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">4</span>
+          Generador de reporte ANCI — Alerta Temprana
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="report-form">
+          <div class="form-row">
+            <span class="form-label">Institución</span>
+            <input class="form-input" id="rInstitution" type="text" placeholder="[NOMBRE ORGANIZACIÓN]">
+          </div>
+          <div class="form-row">
+            <span class="form-label">Delegado</span>
+            <input class="form-input" id="rDelegate" type="text" placeholder="Nombre delegado/a de ciberseguridad">
+          </div>
+          <div class="form-row">
+            <span class="form-label">Detección</span>
+            <input class="form-input" id="rDetection" type="datetime-local">
+          </div>
+          <div class="form-row">
+            <span class="form-label">Descripción</span>
+            <textarea class="form-textarea" id="rDescription" placeholder="Descripción del incidente para el reporte..."></textarea>
+          </div>
+          <div class="form-row">
+            <span class="form-label">Activos</span>
+            <input class="form-input" id="rAssets" type="text" placeholder="Activos y recursos comprometidos">
+          </div>
+          <div class="form-row">
+            <span class="form-label">IoCs</span>
+            <textarea class="form-textarea" id="rIocs" placeholder="IPs, hashes, dominios, indicadores observados..." style="min-height: 48px;"></textarea>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="generate-btn primary" onclick="generateReport('alerta')">→ Generar Alerta Temprana</button>
+            <button class="generate-btn" onclick="generateReport('actualizacion')">→ Actualización (72h)</button>
+            <button class="generate-btn" onclick="generateReport('final')">→ Informe Final (30d)</button>
+          </div>
+        </div>
+        <div class="generated-report" id="generatedReport"></div>
+        <div style="display: flex; gap: 8px; margin-top: 10px; display: none;" id="reportActions">
+          <button class="generate-btn" onclick="copyReport()">📋 Copiar al portapapeles</button>
+          <button class="generate-btn" onclick="downloadReport()">⬇ Descargar .txt</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- TIMERS REGULATORIOS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Ventanas regulatorias</div>
+      </div>
+      <div class="panel-body">
+        <div class="deadline-list">
+          <div class="deadline-item">
+            <div class="deadline-name">⚡ ANCI — Alerta Temprana</div>
+            <div class="deadline-time d-ok" id="dl-3h">03:00:00</div>
+            <div class="deadline-desc">Art. 27 Ley 21.663 · DS 295/2024</div>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-name">📋 ANCI — Actualización</div>
+            <div class="deadline-time d-ok" id="dl-72h">72:00:00</div>
+            <div class="deadline-desc">Reporte detallado · DS 295/2024</div>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-name">📄 ANCI — Informe Final</div>
+            <div class="deadline-time d-ok" id="dl-30d">30d 00:00:00</div>
+            <div class="deadline-desc">Cierre y lecciones aprendidas</div>
+          </div>
+          <div class="deadline-item">
+            <div class="deadline-name">⚓ DIRECTEMAR — Notificación</div>
+            <div class="deadline-time d-ok" id="dl-directemar">Evaluar</div>
+            <div class="deadline-desc">Si afecta operaciones marítimas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACTOS DE ESCALAMIENTO -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Escalamiento</div>
+      </div>
+      <div class="panel-body">
+        <div class="contact-list">
+          <div class="contact-item">
+            <div class="contact-role">Delegado Ciberseguridad</div>
+            <div class="contact-name">[Tu nombre]</div>
+            <div class="contact-actions">
+              <span style="font-size: 11px; color: var(--text-muted);">Responsable del reporte ANCI</span>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-role">Infraestructura TI</div>
+            <div class="contact-name">[Jefe Infraestructura]</div>
+            <div class="contact-actions">
+              <a class="contact-btn" href="tel:+56900000000">📞 Llamar</a>
+              <a class="contact-btn" href="mailto:infra@empresa.cl">✉ Email</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-role">SOC Externo</div>
+            <div class="contact-name">[Proveedor SOC]</div>
+            <div class="contact-actions">
+              <a class="contact-btn" href="tel:+56900000001">📞 Llamar</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-role">Subgerente TI</div>
+            <div class="contact-name">[Subgerente]</div>
+            <div class="contact-actions">
+              <a class="contact-btn" href="tel:+56900000002">📞 Llamar</a>
+              <a class="contact-btn" href="mailto:subgti@empresa.cl">✉ Email</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-role">ANCI — CSIRT Nacional</div>
+            <div class="contact-name">portal.anci.gob.cl</div>
+            <div class="contact-actions">
+              <a class="contact-btn" href="https://portal.anci.gob.cl" target="_blank">🔗 Portal</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-role">DIRECTEMAR</div>
+            <div class="contact-name">Si afecta operaciones marítimas</div>
+            <div class="contact-actions">
+              <a class="contact-btn" href="https://www.directemar.cl" target="_blank">🔗 Web</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG DE INCIDENTE -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Registro cronológico</div>
+      </div>
+      <div class="panel-body">
+        <div class="log-list" id="incidentLog">
+          <div style="color: var(--text-muted); font-size: 11px; font-family: var(--mono);">— Activa el incidente para comenzar el registro —</div>
+        </div>
+        <div class="log-add">
+          <input class="log-input" id="logInput" placeholder="Agregar nota..." onkeypress="if(event.key==='Enter')addLogEntry()">
+          <button class="log-add-btn" onclick="addLogEntry()">+ Agregar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="copy-toast" id="copyToast">Copiado al portapapeles</div>
+
+<!-- MODAL RESET -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <div class="modal-title">⚠ Confirmar reset de incidente</div>
+    <div class="modal-body">Esto borrará toda la información del incidente activo, el log cronológico y detendrá todos los timers. Esta acción no se puede deshacer.</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideResetModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="resetAll()">Confirmar Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let timerInterval = null;
+let incidentStart = null;
+let selectedTaxons = [];
+let selectedAsset = null;
+let actionsDone = {};
+let logEntries = [];
+
+// ── CLASSIFICATION LOGIC ──
+const taxonKeywords = {
+  'Ejecución no autorizada de código': ['ransomware', 'cifra', 'cifrado', 'malware', 'virus', 'extensión', 'extension', 'encrypt', 'código malicioso', 'script', 'ejecut'],
+  'Indisponibilidad y/o denegación de servicio': ['ddos', 'dos', 'saturación', 'caída', 'no responde', 'inaccesible', 'no disponible', 'colgado', 'trabado'],
+  'Degradación de servicio': ['lento', 'lenta', 'rendimiento', 'degradado', 'consultas', 'waf', 'tráfico anómalo', 'muchas consultas', 'alto tráfico'],
+  'Uso no autorizado de redes y sistemas': ['acceso no autorizado', 'acceso indebido', 'intrusión', 'intrusion', 'compromiso', 'cuenta comprometida', 'credencial', 'lateral'],
+  'Exfiltración y/o exposición de datos': ['exfiltración', 'fuga', 'datos expuestos', 'información expuesta', 'leak', 'datos personales'],
+  'Manipulación no autorizada de configuración': ['configuración modificada', 'cambio no autorizado', 'regla modificada', 'firewall alterado'],
+  'Phishing o fraude en infraestructura propia': ['phishing', 'correo malicioso', 'email falso', 'suplantación'],
+  'Modificación no autorizada de datos': ['datos alterados', 'información modificada', 'base de datos alterada'],
+};
+
+function classifyIncident() {
+  const desc = document.getElementById('incidentDesc').value.toLowerCase();
+  if (!desc.trim()) return;
+
+  const scores = {};
+  for (const [taxon, keywords] of Object.entries(taxonKeywords)) {
+    let score = 0;
+    for (const kw of keywords) {
+      if (desc.includes(kw)) score += 1;
+    }
+    if (score > 0) scores[taxon] = score;
+  }
+
+  const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]).slice(0,3);
+
+  const box = document.getElementById('suggestionBox');
+  const list = document.getElementById('suggestionList');
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="font-size:12px; color: var(--text-muted);">No se detectaron patrones claros. Selecciona manualmente en la tabla de abajo.</div>';
+  } else {
+    const total = sorted.reduce((s,i) => s+i[1], 0);
+    list.innerHTML = sorted.map(([taxon, score]) => {
+      const conf = Math.round((score/Math.max(total,1))*100);
+      return `<div class="suggestion-item">
+        <span class="suggestion-name">${taxon}</span>
+        <span class="suggestion-conf">${conf}% coincidencia</span>
+        <button class="suggestion-apply-btn" onclick="applyTaxon('${taxon}')">Aplicar</button>
+      </div>`;
+    }).join('');
+  }
+
+  box.classList.add('visible');
+  addLog(`Clasificación automática ejecutada para: "${document.getElementById('incidentDesc').value.substring(0,60)}..."`);
+}
+
+function applyTaxon(taxon) {
+  document.querySelectorAll('input[name="taxon"]').forEach(cb => {
+    if (cb.value === taxon) {
+      cb.checked = true;
+      cb.closest('.tax-option').classList.add('selected');
+    }
+  });
+  handleTaxonChange(null);
+  addLog(`Clasificación aplicada: ${taxon}`);
+}
+
+function toggleSub(event, subId) {
+  if (event.target.type === 'checkbox') return;
+  const cb = event.currentTarget.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  handleTaxonChange(cb);
+}
+
+function getSelectedSubtaxons() {
+  return Array.from(document.querySelectorAll('input[name="subtaxon"]:checked')).map(i => i.value);
+}
+
+function handleTaxonChange(el) {
+  selectedTaxons = Array.from(document.querySelectorAll('input[name="taxon"]:checked')).map(i => i.value);
+  document.querySelectorAll('.tax-option').forEach(opt => {
+    const cb = opt.querySelector('input[name="taxon"]');
+    if (cb) opt.classList.toggle('selected', cb.checked);
+  });
+  document.querySelectorAll('input[name="taxon"]').forEach(cb => {
+    const label = cb.closest('.tax-option');
+    const nextEl = label ? label.nextElementSibling : null;
+    if (nextEl && nextEl.classList.contains('subcategory-block')) {
+      nextEl.classList.toggle('visible', cb.checked);
+      if (!cb.checked) {
+        nextEl.querySelectorAll('input[name="subtaxon"]').forEach(sub => {
+          sub.checked = false;
+          const subOpt = sub.closest('.sub-option');
+          if (subOpt) subOpt.classList.remove('selected');
+        });
+      }
+    }
+  });
+  renderActions();
+}
+
+// ── ASSET SELECTION ──
+function selectAsset(el, name, type, crit, context) {
+  document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAsset = { name, type, crit, context };
+  document.getElementById('assetSelected').style.display = 'block';
+  document.getElementById('assetSelectedName').textContent = name;
+  document.getElementById('rAssets').value = name;
+  addLog(`Activo afectado identificado: ${name} [${crit}]`);
+  renderActions();
+}
+
+// ── ACTIONS ENGINE ──
+const actionDB = {
+  base: [
+    { phase: 'DETECCIÓN (T+0 → T+30min)', window: 'urgent', actions: [
+      { text: 'Confirmar la alerta con la fuente que reportó (no descartar por email)', tag: 'tech' },
+      { text: 'Documentar hora exacta de detección', tag: 'tech' },
+      { text: 'Evaluar si el incidente califica como "efecto significativo" (Art. 27 Ley 21.663)', tag: 'anci' },
+      { text: 'Notificar internamente: iniciar árbol de llamadas', tag: 'mgmt' },
+    ]},
+    { phase: 'CONTENCIÓN (T+30min → T+3h)', window: 'urgent', actions: [
+      { text: 'Coordinar con Infraestructura TI para aislamiento inicial del activo', tag: 'tech' },
+      { text: 'Contactar SOC externo — solicitar análisis preliminar', tag: 'tech' },
+      { text: 'Preservar evidencia: NO apagar sistemas antes de capturar logs', tag: 'tech' },
+      { text: 'Enviar Alerta Temprana ANCI (≤3h desde detección)', tag: 'anci' },
+    ]},
+  ],
+  ransomware: [
+    { phase: 'ESPECÍFICO — Ransomware / Cifrado', window: '', actions: [
+      { text: 'Identificar y aislar inmediatamente el/los equipo(s) afectado(s) de la red', tag: 'tech' },
+      { text: 'Verificar si el cifrado se está propagando a recursos compartidos de red', tag: 'tech' },
+      { text: 'Identificar la extensión de cifrado y buscar en ID Ransomware (nomoreransom.org)', tag: 'tech' },
+      { text: 'Verificar estado de backups — ¿están también afectados?', tag: 'tech' },
+      { text: 'NO pagar rescate sin aprobación explícita de alta dirección y legal', tag: 'mgmt' },
+      { text: 'Clasificar ANCI: Ejecución no autorizada de código + posible Indisponibilidad', tag: 'anci' },
+    ]}
+  ],
+  exfil: [
+    { phase: 'ESPECÍFICO — Exfiltración de datos', window: '', actions: [
+      { text: 'Determinar qué datos fueron expuestos (personales, operacionales, configuraciones)', tag: 'tech' },
+      { text: 'Si hay datos personales: evaluar notificación bajo Ley 21.719', tag: 'anci' },
+      { text: 'Identificar destino de la exfiltración (IP externa, servicio cloud, etc.)', tag: 'tech' },
+      { text: 'Revocar credenciales comprometidas de inmediato', tag: 'tech' },
+    ]}
+  ],
+  ot: [
+    { phase: 'ESPECÍFICO — Activo OT/ICS', window: '', actions: [
+      { text: 'Evaluar impacto en seguridad física: ¿hay riesgo de accidente o lesión?', tag: 'mgmt' },
+      { text: 'Coordinar con operaciones portuarias para activar contingencia manual si aplica', tag: 'mgmt' },
+      { text: 'Notificar a DIRECTEMAR si hay afectación de operaciones marítimas', tag: 'dir' },
+      { text: 'NO aplicar parches o cambios en OT sin validación del proveedor', tag: 'tech' },
+    ]}
+  ],
+  ddos: [
+    { phase: 'ESPECÍFICO — DDoS / Degradación de servicio', window: '', actions: [
+      { text: 'Activar modo de mitigación en WAF/CDN si disponible', tag: 'tech' },
+      { text: 'Contactar ISP/proveedor de conectividad para filtrado upstream', tag: 'tech' },
+      { text: 'Documentar IPs de origen para el reporte ANCI', tag: 'anci' },
+      { text: 'Evaluar si el DDoS es un vector de distracción para otro ataque simultáneo', tag: 'tech' },
+    ]}
+  ],
+  close: [
+    { phase: 'ERRADICACIÓN Y CIERRE', window: 'warn', actions: [
+      { text: 'Verificar que no persiste acceso del atacante (revisión IOCs)', tag: 'tech' },
+      { text: 'Restaurar desde backup limpio si aplica', tag: 'tech' },
+      { text: 'Enviar actualización ANCI (≤72h) con análisis completo', tag: 'anci' },
+      { text: 'Preparar Informe Final (≤30 días) con lecciones aprendidas', tag: 'anci' },
+      { text: 'Actualizar Matriz de Riesgos con el escenario ocurrido', tag: 'mgmt' },
+    ]}
+  ]
+};
+
+function renderActions() {
+  const panel = document.getElementById('actionsPanel');
+  if (selectedTaxons.length === 0 && !selectedAsset) {
+    panel.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⬆</div>Selecciona la clasificación del incidente y el activo afectado.</div>`;
+    return;
+  }
+
+  let phases = [...actionDB.base];
+
+  const isRansomware = selectedTaxons.some(t => t.includes('Ejecución') || t.includes('Indisponibilidad'));
+  const isExfil = selectedTaxons.some(t => t.includes('Exfiltración'));
+  const isDDoS = selectedTaxons.some(t => t.includes('Degradación') || t.includes('denegación'));
+  const isOT = selectedAsset && (selectedAsset.type.includes('OT') || selectedAsset.name.includes('SCADA') || selectedAsset.name.includes('TOS'));
+
+  if (isRansomware) phases.push(...actionDB.ransomware);
+  if (isExfil) phases.push(...actionDB.exfil);
+  if (isDDoS) phases.push(...actionDB.ddos);
+  if (isOT) phases.push(...actionDB.ot);
+  phases.push(...actionDB.close);
+
+  let total = 0;
+  let done = 0;
+
+  const html = phases.map((phase, pi) => {
+    const actionsHtml = phase.actions.map((action, ai) => {
+      const key = `${pi}-${ai}`;
+      const isDone = actionsDone[key];
+      total++;
+      if (isDone) done++;
+      return `<div class="action-item ${isDone ? 'done' : ''}" onclick="toggleAction('${key}', this)">
+        <div class="action-checkbox">${isDone ? '' : ''}</div>
+        <span class="action-text">${action.text}</span>
+        <span class="action-tag tag-${action.tag}">${
+          action.tag === 'anci' ? 'ANCI' :
+          action.tag === 'dir' ? 'DIRECTEMAR' :
+          action.tag === 'tech' ? 'TI/SOC' : 'DIRECCIÓN'
+        }</span>
+      </div>`;
+    }).join('');
+
+    const windowClass = phase.window === 'urgent' ? 'phase-window urgent' : phase.window === 'warn' ? 'phase-window warn' : 'phase-window';
+    const windowText = phase.window === 'urgent' ? '⚡ ventana crítica ANCI' : '';
+
+    return `<div class="phase-block">
+      <div class="phase-header">
+        <div class="phase-header-left">
+          <span class="phase-label">${phase.phase}</span>
+          ${windowText ? `<span class="${windowClass}">${windowText}</span>` : ''}
+        </div>
+      </div>
+      <div class="phase-actions">${actionsHtml}</div>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = html;
+  document.getElementById('actionsProgress').textContent = `${done}/${total}`;
+}
+
+function toggleAction(key, el) {
+  actionsDone[key] = !actionsDone[key];
+  const text = el.querySelector('.action-text').textContent;
+  if (actionsDone[key]) {
+    addLog(`✓ ${text.substring(0, 60)}`);
+  }
+  renderActions();
+}
+
+// ── TIMER ──
+function startTimer() {
+  if (incidentStart) return;
+  incidentStart = new Date();
+  document.getElementById('timerBtn').disabled = true;
+  document.getElementById('statusBadge').className = 'status-badge status-active';
+  document.getElementById('statusBadge').textContent = 'INCIDENTE ACTIVO';
+  addLog('🚨 INCIDENTE ACTIVADO — Timer regulatorio iniciado');
+  addLog(`Hora de activación: ${incidentStart.toLocaleTimeString('es-CL')}`);
+
+  // Set detection time in form
+  const now = new Date();
+  const tzOffset = now.getTimezoneOffset() * 60000;
+  const localISO = new Date(now - tzOffset).toISOString().slice(0,16);
+  document.getElementById('rDetection').value = localISO;
+
+  timerInterval = setInterval(updateTimers, 1000);
+  updateTimers();
+}
+
+function updateTimers() {
+  if (!incidentStart) return;
+  const now = new Date();
+  const elapsed = Math.floor((now - incidentStart) / 1000);
+
+  const limit3h = 3 * 3600;
+  const limit72h = 72 * 3600;
+  const limit30d = 30 * 24 * 3600;
+
+  // 3h timer (main header)
+  const rem3h = Math.max(0, limit3h - elapsed);
+  const t3 = document.getElementById('timerANCI');
+  t3.textContent = formatTime(rem3h);
+  t3.className = 'timer-value' + (rem3h < 1800 ? ' critical' : rem3h < 5400 ? ' warning' : '');
+
+  // deadline: 3h
+  const dl3h = document.getElementById('dl-3h');
+  dl3h.textContent = rem3h > 0 ? formatTime(rem3h) : 'VENCIDO';
+  dl3h.className = 'deadline-time' + (rem3h === 0 ? ' d-over' : rem3h < 1800 ? ' d-crit' : rem3h < 5400 ? ' d-warn' : ' d-ok');
+
+  // deadline: 72h
+  const rem72h = Math.max(0, limit72h - elapsed);
+  const dl72 = document.getElementById('dl-72h');
+  dl72.textContent = rem72h > 0 ? formatTime(rem72h) : 'VENCIDO';
+  dl72.className = 'deadline-time' + (rem72h === 0 ? ' d-over' : rem72h < 3600 ? ' d-crit' : rem72h < 14400 ? ' d-warn' : ' d-ok');
+
+  // deadline: 30d
+  const rem30d = Math.max(0, limit30d - elapsed);
+  const dl30d = document.getElementById('dl-30d');
+  const days30 = Math.floor(rem30d / 86400);
+  const hrs30 = Math.floor((rem30d % 86400) / 3600);
+  dl30d.textContent = rem30d > 0 ? `${days30}d ${String(hrs30).padStart(2,'0')}:00:00` : 'VENCIDO';
+  dl30d.className = 'deadline-time' + (rem30d === 0 ? ' d-over' : days30 < 3 ? ' d-crit' : days30 < 7 ? ' d-warn' : ' d-ok');
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── REPORT GENERATION ──
+function generateReport(type) {
+  const institution = document.getElementById('rInstitution').value || '[NOMBRE ORGANIZACIÓN]';
+  const delegate = document.getElementById('rDelegate').value || '[DELEGADO DE CIBERSEGURIDAD]';
+  const detection = document.getElementById('rDetection').value || '[FECHA/HORA]';
+  const description = document.getElementById('rDescription').value || document.getElementById('incidentDesc').value || '[DESCRIPCIÓN DEL INCIDENTE]';
+  const assets = document.getElementById('rAssets').value || selectedAsset?.name || '[ACTIVOS AFECTADOS]';
+  const iocs = document.getElementById('rIocs').value || '[INDICADORES DE COMPROMISO]';
+  const taxons = selectedTaxons.length > 0 ? selectedTaxons.join(', ') : '[CLASIFICAR SEGÚN TAXONOMÍA ANCI]';
+  const subtaxons = getSelectedSubtaxons();
+  const subtaxonText = subtaxons.length > 0 ? '\n   Subcategorías: ' + subtaxons.join('; ') : '';
+  const now = new Date().toLocaleString('es-CL');
+
+  let report = '';
+
+  if (type === 'alerta') {
+    report = `══════════════════════════════════════════════════════
+ALERTA TEMPRANA DE INCIDENTE DE CIBERSEGURIDAD
+Ref.: DS N°295/2024 · Art. 27 Ley 21.663
+Generado: ${now}
+══════════════════════════════════════════════════════
+
+1. IDENTIFICACIÓN DE LA INSTITUCIÓN
+   Organización: ${institution}
+   Clasificación: Operador de Importancia Vital (OIV)
+   Registro ANCI: [N° DE REGISTRO]
+
+2. DELEGADO DE CIBERSEGURIDAD
+   Nombre: ${delegate}
+   Cargo: Delegado/a de Ciberseguridad
+   Email: [EMAIL]
+   Teléfono: [TELÉFONO]
+
+3. DATOS DEL INCIDENTE
+   Fecha/hora detección: ${detection}
+   Fecha/hora estimada inicio: [COMPLETAR SI SE CONOCE]
+   Estado actual: En gestión
+
+4. CLASIFICACIÓN TAXONÓMICA (Res. Exenta N°7/2025)
+   ${taxons}${subtaxonText}
+
+5. DESCRIPCIÓN PRELIMINAR
+   ${description}
+
+6. ACTIVOS Y RECURSOS COMPROMETIDOS
+   ${assets}
+
+7. INDICADORES DE COMPROMISO (IoCs)
+   ${iocs || 'En proceso de recopilación'}
+
+8. REPERCUSIONES EN OTRAS INSTITUCIONES
+   [INDICAR SI SE CONOCEN INSTITUCIONES AFECTADAS / NO SE CONOCEN AÚN]
+
+9. ACCIONES INMEDIATAS TOMADAS
+   - Incidente detectado y confirmado
+   - Proceso de contención iniciado
+   - Personal técnico notificado
+   [COMPLETAR CON ACCIONES ESPECÍFICAS]
+
+══════════════════════════════════════════════════════
+Este reporte es de carácter preliminar. Se enviará
+actualización dentro de las próximas 72 horas.
+Portal ANCI: https://portal.anci.gob.cl
+══════════════════════════════════════════════════════`;
+  } else if (type === 'actualizacion') {
+    report = `══════════════════════════════════════════════════════
+ACTUALIZACIÓN DE INCIDENTE DE CIBERSEGURIDAD (72h)
+Ref.: DS N°295/2024
+Generado: ${now}
+══════════════════════════════════════════════════════
+
+Referencia Alerta Temprana: [N° ANCI / FOLIO]
+Organización: ${institution}
+Delegado: ${delegate}
+
+RESUMEN EJECUTIVO DE AVANCE
+${description}
+
+ANÁLISIS TÉCNICO ACTUALIZADO
+- Causa raíz identificada: [COMPLETAR]
+- Alcance del impacto: [COMPLETAR]
+- Datos personales afectados: [SÍ/NO — si SÍ, evaluar Ley 21.719]
+
+ACCIONES DE CONTENCIÓN EJECUTADAS
+[COMPLETAR]
+
+ESTADO ACTUAL
+[COMPLETAR]
+
+PRÓXIMOS PASOS
+[COMPLETAR]
+
+Próxima actualización: [FECHA — máx. 30 días para informe final]
+══════════════════════════════════════════════════════`;
+  } else {
+    report = `══════════════════════════════════════════════════════
+INFORME FINAL — CIERRE DE INCIDENTE
+Ref.: DS N°295/2024
+Generado: ${now}
+══════════════════════════════════════════════════════
+
+Referencia: [N° ANCI / FOLIO]
+Organización: ${institution}
+Delegado: ${delegate}
+
+1. CRONOLOGÍA DEL INCIDENTE
+   Detección: ${detection}
+   Contención: [FECHA/HORA]
+   Resolución: [FECHA/HORA]
+   Duración total: [X horas]
+
+2. ANÁLISIS DE CAUSA RAÍZ
+   [COMPLETAR]
+
+3. IMPACTO TOTAL
+   Operacional: [COMPLETAR]
+   Financiero: [COMPLETAR]
+   Datos personales: [COMPLETAR]
+
+4. MEDIDAS DE REMEDIACIÓN EJECUTADAS
+   [COMPLETAR]
+
+5. LECCIONES APRENDIDAS
+   [COMPLETAR]
+
+6. CONTROLES IMPLEMENTADOS PARA PREVENCIÓN
+   [COMPLETAR]
+
+7. ACTUALIZACIÓN MATRIZ DE RIESGOS
+   [INDICAR SI SE ACTUALIZÓ / FECHA]
+
+══════════════════════════════════════════════════════`;
+  }
+
+  const el = document.getElementById('generatedReport');
+  el.textContent = report;
+  el.classList.add('visible');
+  document.getElementById('reportActions').style.display = 'flex';
+  addLog(`Reporte generado: ${type === 'alerta' ? 'Alerta Temprana ANCI' : type === 'actualizacion' ? 'Actualización 72h' : 'Informe Final'}`);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyReport() {
+  const text = document.getElementById('generatedReport').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copiado al portapapeles'));
+}
+
+function downloadReport() {
+  const text = document.getElementById('generatedReport').textContent;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reporte-anci-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
+
+// ── LOG ──
+function addLog(text, important = false) {
+  const now = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  logEntries.push({ time: now, text, important });
+  renderLog();
+  document.addEventListener('change', function(e) {
+    if (e.target.name === 'subtaxon') {
+      const subOpt = e.target.closest('.sub-option');
+      if (subOpt) subOpt.classList.toggle('selected', e.target.checked);
+    }
+  });
+}
+
+function renderLog() {
+  const el = document.getElementById('incidentLog');
+  if (logEntries.length === 0) {
+    el.innerHTML = `<div style="color: var(--text-muted); font-size: 11px; font-family: var(--mono);">— Activa el incidente para comenzar el registro —</div>`;
+    return;
+  }
+  el.innerHTML = logEntries.slice().reverse().map(e =>
+    `<div class="log-entry">
+      <span class="log-time">${e.time}</span>
+      <span class="log-text ${e.important ? 'important' : ''}">${e.text}</span>
+    </div>`
+  ).join('');
+}
+
+function addLogEntry() {
+  const input = document.getElementById('logInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addLog(text, true);
+  input.value = '';
+}
+
+// ── RESET ──
+function showResetModal() { document.getElementById('resetModal').classList.add('visible'); }
+function hideResetModal() { document.getElementById('resetModal').classList.remove('visible'); }
+
+function resetAll() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  incidentStart = null;
+  selectedTaxons = [];
+  selectedAsset = null;
+  actionsDone = {};
+  logEntries = [];
+
+  document.getElementById('timerANCI').textContent = '03:00:00';
+  document.getElementById('timerANCI').className = 'timer-value';
+  document.getElementById('timerBtn').disabled = false;
+  document.getElementById('statusBadge').className = 'status-badge status-idle';
+  document.getElementById('statusBadge').textContent = 'STANDBY';
+
+  document.getElementById('dl-3h').textContent = '03:00:00';
+  document.getElementById('dl-3h').className = 'deadline-time d-ok';
+  document.getElementById('dl-72h').textContent = '72:00:00';
+  document.getElementById('dl-72h').className = 'deadline-time d-ok';
+  document.getElementById('dl-30d').textContent = '30d 00:00:00';
+  document.getElementById('dl-30d').className = 'deadline-time d-ok';
+
+  document.querySelectorAll('input[name="taxon"]').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('input[name="subtaxon"]').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('.tax-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.sub-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.subcategory-block').forEach(el => el.classList.remove('visible'));
+  document.querySelectorAll('.asset-card').forEach(el => el.classList.remove('selected'));
+
+  document.getElementById('incidentDesc').value = '';
+  document.getElementById('suggestionBox').classList.remove('visible');
+  document.getElementById('assetSelected').style.display = 'none';
+  document.getElementById('generatedReport').classList.remove('visible');
+  document.getElementById('reportActions').style.display = 'none';
+  document.getElementById('incidentLog').innerHTML = `<div style="color: var(--text-muted); font-size: 11px; font-family: var(--mono);">— Activa el incidente para comenzar el registro —</div>`;
+
+  renderActions();
+  hideResetModal();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('copyToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+renderLog();
+</script>
+</body>
+</html>
